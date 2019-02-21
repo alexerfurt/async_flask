@@ -11,7 +11,11 @@ To use - please clone the repository and then set up your virtual environment us
 
     git clone https://github.com/alexerfurt/async_flask_app
     cd async_flask_app
+    (Recommended) Create virtual env: python3 -m venv /path/to/new/virtual/environment
+    (Recommended) source /path/to/new/virtual/environment/bin/activate
+    OR use existing, local virtualenv 'flaskiotest' (still need to active like shown above)
     pip install flask-socketio
+    pip install eventlet
     pip install -r requirements.txt
 
 Start the application with:
@@ -22,5 +26,5 @@ python application.py
 
 And visit http://localhost:5000 to see the updating numbers.
 
-TODO: HTTP POST REQUEST from an example app to the backend. Use the following curl command for testing in the meantime:
-  "curl --header "Content-Type: application/json"   --request POST   data '{"product_name": str, "confidence": int}'   http://localhost:5000/newstate"
+Use request.py or the following curl command to post HTTP requests for testing:
+  "curl --header "Content-Type: application/json"   --request POST   --data '{"product_name": str, "confidence": int}'   http://localhost:5000/newstate"
