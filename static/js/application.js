@@ -4,19 +4,23 @@ $(document).ready(function(){
     var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
     var numbers_received = [];
 
+    var FUN_FACTS = {
+      'APPLE': 'It\'s round',
+      'GOOGLE': 'It\'s big',
+    }
+
     //receive details from server
-    socket.on('newnumber', function(msg) {
-        console.log("Received number" + msg.number);
+    socket.on('newfact', function(msg) {
         //maintain a list of ten numbers
-        if (numbers_received.length >= 10){
-            numbers_received.shift()
-        }            
-        numbers_received.push(msg.number);
-        numbers_string = '';
-        for (var i = 0; i < numbers_received.length; i++){
-            numbers_string = numbers_string + '<p>' + numbers_received[i].toString() + '</p>';
+
+        //console.log('SEE smth')
+        var prodName = msg.product_name;
+        var funFact = 'Never seen this product before';
+        if (prodName && FUN_FACTS[prodName]){
+          var funFact = FUN_FACTS[prodName]
         }
-        $('#log').html(numbers_string);
+
+        $('#log').html(funFact);
     });
 
 });

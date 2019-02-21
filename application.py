@@ -1,82 +1,86 @@
 """
 Demo Flask application to test the operation of Flask with socket.io
 
-Aim is to create a webpage that is constantly updated with random numbers from a background python process.
+Based on tutorials from Miguel Grinberg
+https://github.com/miguelgrinberg/Flask-SocketIO
+and Shane Lynn
+https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/
 
-30th May 2014
+Aim is to create a webpage that is updating content based on output from another application.
+
+15th Feb 2019
 
 ===================
 
-Updated 13th April 2018
+Updated 20th Feb 2019
 
-+ Upgraded code to Python 3
-+ Used Python3 SocketIO implementation
-+ Updated CDN Javascript and CSS sources
++ Upgraded with eventlet
++ Added async_mode
++ Added HTTP POST request handler
 
 """
 
-
-
-
 # Start with a basic flask app webpage.
+import eventlet
+eventlet.monkey_patch()
 from flask_socketio import SocketIO, emit
-from flask import Flask, render_template, url_for, copy_current_request_context
+from flask import Flask, render_template, url_for, copy_current_request_context, request
 from random import random
 from time import sleep
 from threading import Thread, Event
+import json
 
-
-__author__ = 'slynn'
+#original author 'slynn'
+__author__ = 'aerfurt'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 app.config['DEBUG'] = True
 
 #turn the flask app into a socketio app
-socketio = SocketIO(app)
+async_mode = 'eventlet'
+socketio = SocketIO(app, async_mode=async_mode)
 
 #random number Generator Thread
 thread = Thread()
 thread_stop_event = Event()
 
-class RandomThread(Thread):
-    def __init__(self):
-        self.delay = 1
-        super(RandomThread, self).__init__()
+global_state = {
+'product_name': 'Undefined',
+'confidence': 1.0
+}
 
-    def randomNumberGenerator(self):
-        """
-        Generate a random number every 1 second and emit to a socketio instance (broadcast)
-        Ideally to be run in a separate thread?
-        """
-        #infinite loop of magical random numbers
-        print("Making random numbers")
-        while not thread_stop_event.isSet():
-            number = round(random()*10, 3)
-            print(number)
-            socketio.emit('newnumber', {'number': number}, namespace='/test')
-            sleep(self.delay)
-
-    def run(self):
-        self.randomNumberGenerator()
-
+def update_state(product_name, confidence):
+    defined = confidence and confidence > 0.7
+    if defined:
+        global_state['product_name'] = product_name
+        global_state['confidence'] = confidence
+    return defined
 
 @app.route('/')
 def index():
     #only by sending this page first will the client be connected to the socketio instance
     return render_template('index.html')
 
+@app.route('/newstate', methods=['POST'])
+def fetch_label():
+    #only by sending this page first will the client be connected to the socketio instance
+    payload = request.get_json() # payload is {'product_name': str, 'confidence': float}
+    should_notify = update_state(payload.get('product_name', None),
+                                 payload.get('confidence', None))
+    if should_notify:
+        msg = {
+            'product_name': global_state['product_name'],
+        }
+        print(msg)
+        socketio.emit('newfact', msg, namespace='/test')
+    return 'OK'
+
 @socketio.on('connect', namespace='/test')
 def test_connect():
     # need visibility of the global thread object
-    global thread
     print('Client connected')
 
-    #Start the random number generator thread only if the thread has not been started before.
-    if not thread.isAlive():
-        print("Starting Thread")
-        thread = RandomThread()
-        thread.start()
 
 @socketio.on('disconnect', namespace='/test')
 def test_disconnect():
