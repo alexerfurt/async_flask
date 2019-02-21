@@ -10,8 +10,8 @@ It is based on Shane Lynn's async_flask repo (https://github.com/shanealynn/asyn
 To use - please clone the repository and then set up your virtual environment using the requirements.txt file with pip and virtualenv. You can achieve this with:
 
 
-    git clone https://github.com/alexerfurt/async_flask
-    cd async_flask
+    git clone https://github.com/alexerfurt/async_flask_app
+    cd async_flask_app
     pip install flask-socketio
     pip install -r requirements.txt
 
